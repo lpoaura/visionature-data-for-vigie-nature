@@ -7,14 +7,14 @@ SELECT
   , survey_geotype
   , point_num
   , euring_codesp
-  , t_survey.db_source
+  , t_releve.bdd_source
 --   , sum(count)
     FROM
-        pr_stoc.t_observations
-            JOIN pr_stoc.t_survey ON t_observations.survey_id = t_survey.id
-            LEFT JOIN pr_stoc.match_taxa_repo ON euring_codesp = euring_code AND ref_tax IS TRUE
+        pr_vigienature.t_observation
+            JOIN pr_vigienature.t_releve ON t_observation.survey_id = t_releve.id
+            LEFT JOIN pr_vigienature.cor_taxon_referentiels ON euring_codesp = euring_code AND ref_tax IS TRUE
     WHERE
-          t_survey.db_source LIKE 'vn%'
+          t_releve.bdd_source LIKE 'vn%'
       AND carre_numnat = 11158
       AND date BETWEEN '2019-04-20' AND '2019-04-24'
       AND point_num = 1
@@ -22,7 +22,7 @@ SELECT
 
 SELECT *
     FROM
-        pr_stoc.t_observations
+        pr_vigienature.t_observation
     ORDER BY
         update_ts ASC
     LIMIT 20
@@ -34,31 +34,39 @@ SET
     site = site
     WHERE
             id_form_universal IN (SELECT
-                                      db_source_id_universal
+                                      bdd_source_id_universal
                                       FROM
-                                          pr_stoc.t_survey
+                                          pr_vigienature.t_releve
                                       WHERE
-                                          db_source LIKE 'vn%')
+                                          bdd_source LIKE 'vn%')
 
 SELECT
     min(id)
   , max(id)
     FROM
-        pr_stoc.t_survey
+        pr_vigienature.t_releve
     WHERE
-        db_source LIKE 'vn%'
+        bdd_source LIKE 'vn%'
 ;
 
-UPDATE pr_stoc.t_observations
+UPDATE pr_vigienature.t_observation
 SET
     update_ts = to_timestamp(obsjson.update)
     FROM
         import_vn.observations_json obsjson
     WHERE
-          db_source = site
-      AND db_source_id = obsjson.id
+          bdd_source = site
+      AND bdd_source_id = obsjson.id
 ;
 
+SELECT
+    jsonb_pretty(item)
+    FROM
+        src_vn_json.forms_json
+    WHERE
+        item #>> '{protocol, protocol_name}' = 'STOC_EPS'
+    LIMIT 5
+;
 
 SELECT
     form.id
@@ -153,7 +161,7 @@ WHERE
     (obs.site, obs.id)
     =
 
-    (observations.source, observations.db_source_id_data)
+    (observations.source, observations.bdd_source_id_data)
     AND
         observations.source LIKE 'vn07'
 ;
@@ -183,8 +191,8 @@ SELECT *
 
 SELECT *
     FROM
-        pr_stoc.t_observations
-            JOIN pr_stoc.t_survey ON t_observations.survey_id = t_survey.id
+        pr_vigienature.t_observation
+            JOIN pr_vigienature.t_releve ON t_observation.survey_id = t_releve.id
     WHERE
         update_ts > '2019-09-05'
 ;
