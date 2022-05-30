@@ -47,7 +47,7 @@ SET
                                    src_vn_json.forms_json f
                                WHERE
                                    f.item #>> '{protocol,protocol_name}' LIKE 'S_OC%'
-                               LIMIT 10)
+                               LIMIT 100)
 ;
 ROLLBACK ;
 

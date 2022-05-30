@@ -180,8 +180,10 @@ $$
         AS
         $upsert_releve$
         DECLARE
-            the_date                    DATE;
-            the_time                    TIME;
+            the_date_start              DATE;
+            the_time_start              TIME;
+            the_date_stop               DATE;
+            the_time_stop               TIME;
             the_observer                VARCHAR(100);
             the_carre_suivi_id          INTEGER;
             the_carre_numnat            INTEGER;
@@ -214,8 +216,10 @@ $$
             the_type_releve             VARCHAR(20);
             the_source_data             JSONB;
         BEGIN
-            the_date = cast(new.item ->> 'date_start' AS DATE);
-            the_time = cast(new.item ->> 'time_start' AS TIME);
+            the_date_start = cast(new.item ->> 'date_start' AS DATE);
+            the_time_start = cast(new.item ->> 'time_start' AS TIME);
+            the_date_stop = cast(new.item ->> 'date_stop' AS DATE);
+            the_time_stop = cast(new.item ->> 'time_stop' AS TIME);
             the_observer = pr_vigienature.fct_get_observer_from_vn(cast(new.item ->> '@uid' AS INT), new.site);
             the_carre_numnat = CASE
                                    WHEN new.item #>> '{protocol, protocol_name}' LIKE 'STOC_EPS'
@@ -231,23 +235,27 @@ $$
                     st_setsrid(st_makepoint(cast(new.item ->> 'lon' AS FLOAT), cast(new.item ->> 'lat' AS FLOAT)),
                                4326), 2154);
             the_altitude = pr_vigienature.fct_get_altitude_from_dem(the_geom_point);
-            the_nuage_id = pr_vigienature.fct_get_nomenclature('NUAGE', new.item #>> '{protocol, stoc_cloud}');
-            the_pluie_id = pr_vigienature.fct_get_nomenclature('PLUIE', new.item #>> '{protocol, stoc_rain}');
-            the_vent_id = pr_vigienature.fct_get_nomenclature('VENT', new.item #>> '{protocol, stoc_wind}');
+            the_nuage_id = pr_vigienature.fct_get_nomenclature('CLOUD', new.item #>> '{protocol, stoc_cloud}');
+            the_pluie_id = pr_vigienature.fct_get_nomenclature('RAIN', new.item #>> '{protocol, stoc_rain}');
+            the_vent_id = pr_vigienature.fct_get_nomenclature('WIND', new.item #>> '{protocol, stoc_wind}');
             the_visibilite_id =
-                    pr_vigienature.fct_get_nomenclature('VISIBILITE', new.item #>> '{protocol, stoc_visibility}');
-            the_p_milieu_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hp1}');
-            the_p_type_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hp2}');
-            the_p_cat1_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hp3A}');
-            the_p_cat2_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hp3B}');
-            the_p_ss_cat1_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hp4A}');
-            the_p_ss_cat2_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hp4B}');
-            the_s_milieu_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hs1}');
-            the_s_type_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hs2}');
-            the_s_cat1_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hs3A}');
-            the_s_cat2_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hs3B}');
-            the_s_ss_cat1_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hs4A}');
-            the_s_ss_cat2_id = pr_vigienature.fct_get_nomenclature('HABITAT', new.item #>> '{protocol, habitat, hs4B}');
+                    pr_vigienature.fct_get_nomenclature('VISIBILITY', new.item #>> '{protocol, stoc_visibility}');
+            the_p_milieu_id = pr_vigienature.fct_get_nomenclature('HAB_ENV', new.item #>> '{protocol, habitat, hp1}');
+            the_p_type_id = pr_vigienature.fct_get_nomenclature('HAB_TYP', new.item #>> '{protocol, habitat, hp2}');
+            the_p_cat1_id = pr_vigienature.fct_get_nomenclature('HAB_CAT1', new.item #>> '{protocol, habitat, hp3A}');
+            the_p_cat2_id = pr_vigienature.fct_get_nomenclature('HAB_CAT1', new.item #>> '{protocol, habitat, hp3B}');
+            the_p_ss_cat1_id =
+                    pr_vigienature.fct_get_nomenclature('HAB_CAT2', new.item #>> '{protocol, habitat, hp4A}');
+            the_p_ss_cat2_id =
+                    pr_vigienature.fct_get_nomenclature('HAB_CAT2', new.item #>> '{protocol, habitat, hp4B}');
+            the_s_milieu_id = pr_vigienature.fct_get_nomenclature('HAB_ENV', new.item #>> '{protocol, habitat, hs1}');
+            the_s_type_id = pr_vigienature.fct_get_nomenclature('HAB_TYP', new.item #>> '{protocol, habitat, hs2}');
+            the_s_cat1_id = pr_vigienature.fct_get_nomenclature('HAB_CAT1', new.item #>> '{protocol, habitat, hs3A}');
+            the_s_cat2_id = pr_vigienature.fct_get_nomenclature('HAB_CAT1', new.item #>> '{protocol, habitat, hs3B}');
+            the_s_ss_cat1_id =
+                    pr_vigienature.fct_get_nomenclature('HAB_CAT2', new.item #>> '{protocol, habitat, hs4A}');
+            the_s_ss_cat2_id =
+                    pr_vigienature.fct_get_nomenclature('HAB_CAT2', new.item #>> '{protocol, habitat, hs4B}');
             the_site = CASE
                            WHEN new.item #>> '{protocol, protocol_name}' LIKE 'STOC_SITES'
                                THEN TRUE
@@ -266,9 +274,11 @@ $$
             IF (tg_op IN ('UPDATE', 'INSERT'))
             THEN
                 INSERT INTO
-                    pr_vigienature.t_releve ( date
-                                            , time
-                                            , observer
+                    pr_vigienature.t_releve ( date_debut
+                                            , heure_debut
+                                            , date_fin
+                                            , heure_fin
+                                            , observateur
                                             , carre_numnat
                                             , point_num
                                             , site_name
@@ -299,8 +309,10 @@ $$
                                             , type_releve
                                             , source_data)
                     VALUES
-                        ( the_date
-                        , the_time
+                        ( the_date_start
+                        , the_time_start
+                        , the_date_stop
+                        , the_time_stop
                         , the_observer
                         , the_carre_numnat
                         , the_point_num
@@ -333,9 +345,11 @@ $$
                         , the_source_data)
                 ON CONFLICT (bdd_source_id_universal) DO UPDATE
                     SET
-                        date                    = the_date
-                      , time                    = the_time
-                      , observer                = the_observer
+                        date_debut              = the_date_start
+                      , heure_debut             = the_time_start
+                      , date_fin                = the_date_stop
+                      , heure_fin               = the_time_stop
+                      , observateur             = the_observer
                       , carre_numnat            = the_carre_numnat
                       , point_num               = the_point_num
                       , site_name               = the_site_name
