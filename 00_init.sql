@@ -135,18 +135,17 @@ $$
             s_cat2_id               INT REFERENCES pr_vigienature.t_nomenclature (id), -- Catégorie 2 du milieu secondaire
             s_ss_cat1_id            INT REFERENCES pr_vigienature.t_nomenclature (id), -- Sous-catégorie 1 du milieu secondaire
             s_ss_cat2_id            INT REFERENCES pr_vigienature.t_nomenclature (id), -- Sous catégorie 2 du milieu secondaire
-            site                    BOOLEAN               NOT NULL,                    -- Est un STOC SITE
             bdd_source              VARCHAR(50)           NOT NULL,                    -- Base de donnée source
             bdd_source_id           INTEGER               NOT NULL,                    -- identifiant dans la base de donnée source
             bdd_source_id_universal VARCHAR(250) UNIQUE   NOT NULL,                    -- Identifiant unique universel dans la base de donnée source
-            type_releve             VARCHAR(20),                                       -- Type de relevé (point vs transect)
+            type_releve             VARCHAR(20)           NOT NULL,                    -- Type de relevé (point vs transect)
             nom_protocole           VARCHAR(20)           NOT NULL,                    -- Code du protocole (STOC EPS, STOC SITE, SHOC, etc.)
             geom_point              GEOMETRY(point, 2154) NOT NULL,                    -- Geométrie de type point
             geom_transect           GEOMETRY(linestring, 2154),                        -- Géométrie de type transect
             source_data             JSONB                 NOT NULL,                    -- Donnée source au format JSON
             update_ts
                                     TIMESTAMP,
-            CONSTRAINT type_esp_con CHECK (type_releve IN ('Point', 'Transect') OR type_releve IS NULL)
+            CONSTRAINT type_esp_con CHECK (type_releve IN ('point', 'transect') OR type_releve IS NULL)
         );
 /* Commentaire des champs de la table pr_vigienature.t_releve */
         COMMENT ON TABLE pr_vigienature.t_releve IS 'Table des Relevés Vigie-Nature';
@@ -177,7 +176,6 @@ $$
         COMMENT ON COLUMN pr_vigienature.t_releve.s_cat2_id IS 'Catégorie 2 du milieu secondaire';
         COMMENT ON COLUMN pr_vigienature.t_releve.s_ss_cat1_id IS 'Sous-catégorie 1 du milieu secondaire';
         COMMENT ON COLUMN pr_vigienature.t_releve.s_ss_cat2_id IS 'Sous catégorie 2 du milieu secondaire';
-        COMMENT ON COLUMN pr_vigienature.t_releve.site IS 'Est un STOC SITE';
         COMMENT ON COLUMN pr_vigienature.t_releve.bdd_source IS 'Base de donnée source';
         COMMENT ON COLUMN pr_vigienature.t_releve.bdd_source_id IS 'identifiant dans la base de donnée source';
         COMMENT ON COLUMN pr_vigienature.t_releve.bdd_source_id_universal IS 'Identifiant unique universel dans la base de donnée source';
@@ -188,11 +186,11 @@ $$
         COMMENT ON COLUMN pr_vigienature.t_releve.source_data IS 'Donnée source brute au format JSON';
         COMMENT ON COLUMN pr_vigienature.t_releve.update_ts IS 'Timestamp de la dernière mise à jour dans la base de donnée';
 
-/* Index sur les colonnes carre_numnat, date et point_num */
+        /* Index sur les colonnes carre_numnat, date et point_num */
 
 
-        CREATE UNIQUE INDEX ON pr_vigienature.t_releve (carre_numnat, date_debut, point_num);
-        CREATE UNIQUE INDEX ON pr_vigienature.t_releve (bdd_source, bdd_source_id);
+--         CREATE UNIQUE INDEX ON pr_vigienature.t_releve (carre_numnat, date_debut, point_num);
+--         CREATE UNIQUE INDEX ON pr_vigienature.t_releve (bdd_source, bdd_source_id);
         CREATE INDEX ON pr_vigienature.t_releve (bdd_source_id_universal);
         CREATE INDEX ON pr_vigienature.t_releve
             USING gist (geom_transect);

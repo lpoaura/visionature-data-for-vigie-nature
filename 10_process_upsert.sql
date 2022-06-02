@@ -21,6 +21,9 @@ SET
                                       pr_vigienature.t_releve)
 ;
 
+TRUNCATE pr_vigienature.t_releve RESTART IDENTITY CASCADE
+;
+
 UPDATE
     src_vn_json.forms_json
 SET
@@ -33,10 +36,24 @@ SET
                                    src_vn_json.forms_json t
                                WHERE
                                    item #>> '{protocol,protocol_name}' LIKE 'S_OC%'
-                               LIMIT 1000)
+                               LIMIT 10000)
 ;
 
 SELECT *
     FROM
         pr_vigienature.t_releve
+;
+
+SELECT DISTINCT
+--     id
+    site
+  , item #>> '{protocol, site_code}' as site_code
+  , item #>> '{protocol, protocol_name}' as protocol
+--   , jsonb_pretty(item)
+    FROM
+        src_vn_json.forms_json
+    WHERE
+          NOT (item #>> '{protocol, site_code}') ~ '^[0-9\.]+$'
+      AND item #>> '{protocol, protocol_name}' LIKE 'S_OC%'
+      AND item #>> '{protocol, protocol_name}' NOT IN ('STOC_SITES','STOC_MONTAGNE')
 ;
