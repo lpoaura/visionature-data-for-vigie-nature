@@ -141,7 +141,7 @@ $$
             type_releve             VARCHAR(20)           NOT NULL,                    -- Type de relevé (point vs transect)
             nom_protocole           VARCHAR(20)           NOT NULL,                    -- Code du protocole (STOC EPS, STOC SITE, SHOC, etc.)
             geom_point              GEOMETRY(point, 2154) NOT NULL,                    -- Geométrie de type point
-            geom_transect           GEOMETRY(linestring, 2154),                        -- Géométrie de type transect
+            geom_transect           GEOMETRY(multilinestring, 2154),                   -- Géométrie de type transect
             source_data             JSONB                 NOT NULL,                    -- Donnée source au format JSON
             update_ts
                                     TIMESTAMP,
@@ -240,7 +240,75 @@ $$
         CREATE INDEX ON pr_vigienature.t_observation (bdd_source_id);
         CREATE INDEX ON pr_vigienature.t_observation (bdd_source_id_universal);
 
+
+        DROP VIEW IF EXISTS pr_vigienature.v_vigienature_data;
+
+        CREATE VIEW pr_vigienature.v_vigienature_data AS
+        SELECT
+            rel.bdd_source_id_universal AS rel_id_universal_ff
+          , rel.nom_protocole           AS rel_nom_protocole
+          , rel.type_releve             AS rel_type_releve
+          , rel.carre_numnat            AS rel_carre_numnat
+          , rel.site_name               AS rel_site_name
+          , rel.passage_mnhn            AS rel_passage_mnhn
+          , rel.date_debut              AS rel_date_debut
+          , rel.heure_debut             AS rel_heure_debut
+          , rel.date_fin                AS rel_date_fin
+          , rel.heure_fin               AS rel_heure_fin
+          , rel.altitude                AS rel_altitude
+          , nnuage.code                 AS rel_nuage
+          , npluie.code                 AS rel_pluie
+          , nvent.code                  AS rel_vent
+          , nvisibilite.code            AS rel_visibilite
+          , npmilieu.code               AS rel_p_milieu
+          , np_cat1.code                AS rel_p_cat1
+          , np_cat2.code                AS rel_p_cat2
+          , np_ss_cat1.code             AS rel_p_ss_cat1
+          , np_ss_cat2.code             AS rel_p_ss_cat2
+          , ns_cat1.code                AS rel_s_cat1
+          , ns_cat2.code                AS rel_s_cat2
+          , ns_ss_cat1.code             AS rel_s_ss_cat1
+          , ns_ss_cat2.code             AS rel_s_ss_cat2
+          , st_x(geom_point)            AS rel_x
+          , st_y(geom_point)            AS rel_y
+          , st_astext(geom_point)       AS rel_geom
+          , st_astext(geom_transect)    AS rel_transect
+          , obs.bdd_source_id_universal AS obs_id_universal_ff
+          , obs.uuid                    AS obs_uuid
+          , obs.nom_cite                AS obs_nom_cite
+          , tax.cd_nom                  AS obs_cd_nom
+          , tax.euring_code             AS obs_code_euring
+          , ndist.code                  AS obs_distance
+          , obs.nombre                  AS obs_nombre
+--   , obs.details                 AS obs_dist
+          , obs.details ->> 'age'       AS obs_age
+          , obs.details ->> 'sex'       AS obs_sexe
+          , obs.details ->> 'condition' AS obs_condition
+            FROM
+                pr_vigienature.t_releve rel
+                    JOIN pr_vigienature.l_carre_suivi
+                         ON rel.carre_suivi_id = l_carre_suivi.id
+                    JOIN pr_vigienature.t_observation obs ON rel.id = obs.releve_id
+                    LEFT JOIN pr_vigienature.cor_taxon_referentiels tax ON obs.taxon_id = tax.id
+                    LEFT JOIN pr_vigienature.t_nomenclature ndist ON obs.distance_id = ndist.id
+                    LEFT JOIN pr_vigienature.t_nomenclature nnuage ON rel.nuage_id = nnuage.id
+                    LEFT JOIN pr_vigienature.t_nomenclature npluie ON rel.pluie_id = npluie.id
+                    LEFT JOIN pr_vigienature.t_nomenclature nvent ON rel.vent_id = nvent.id
+                    LEFT JOIN pr_vigienature.t_nomenclature nvisibilite ON rel.visibilite_id = nvisibilite.id
+                    LEFT JOIN pr_vigienature.t_nomenclature npmilieu ON rel.p_milieu_id = npmilieu.id
+                    LEFT JOIN pr_vigienature.t_nomenclature np_cat1 ON rel.p_cat1_id = np_cat1.id
+                    LEFT JOIN pr_vigienature.t_nomenclature np_cat2 ON rel.p_cat2_id = np_cat2.id
+                    LEFT JOIN pr_vigienature.t_nomenclature np_ss_cat1 ON rel.p_ss_cat1_id = np_ss_cat1.id
+                    LEFT JOIN pr_vigienature.t_nomenclature np_ss_cat2 ON rel.p_ss_cat2_id = np_ss_cat2.id
+                    LEFT JOIN pr_vigienature.t_nomenclature ns_cat1 ON rel.s_cat1_id = ns_cat1.id
+                    LEFT JOIN pr_vigienature.t_nomenclature ns_cat2 ON rel.s_cat2_id = ns_cat2.id
+                    LEFT JOIN pr_vigienature.t_nomenclature ns_ss_cat1 ON rel.s_ss_cat1_id = ns_ss_cat1.id
+                    LEFT JOIN pr_vigienature.t_nomenclature ns_ss_cat2 ON rel.s_ss_cat2_id = ns_ss_cat2.id;
+
         COMMIT;
     END
 $$
 ;
+
+
+select * from pr_vigienature.v_vigienature_data;

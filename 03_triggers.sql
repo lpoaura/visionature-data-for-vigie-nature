@@ -40,7 +40,7 @@ $$
         DROP TRIGGER IF EXISTS tri_vigienature_update_alti
             ON pr_vigienature.t_releve;
         CREATE TRIGGER tri_vigienature_update_alti
-            AFTER UPDATE
+            AFTER UPDATE OF geom_point
             ON pr_vigienature.t_releve
             FOR EACH ROW
 --             WHEN (NOT old.geom_point ~= new.geom_point AND new.geom_point IS NOT NULL)
@@ -55,7 +55,6 @@ $$
             FOR EACH ROW
             WHEN (new.id_form_universal IS NOT NULL)
         EXECUTE PROCEDURE pr_vigienature.fct_tri_update_obs();
-
         COMMIT;
     END
 $$
@@ -80,7 +79,7 @@ SET
                                    src_vn_json.forms_json f
                                WHERE
                                      f.item #>> '{protocol,protocol_name}' LIKE 'S_OC%'
-                                 AND item ->> 'id_form_universal' NOT LIKE '0')
+                                 AND item ->> 'id_form_universal' NOT LIKE '0' limit 200)
 
 ;
 

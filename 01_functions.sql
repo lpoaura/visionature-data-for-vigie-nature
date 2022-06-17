@@ -493,7 +493,7 @@ $$
                     THEN
                         UPDATE pr_vigienature.t_releve
                         SET
-                            geom_transect = st_transform(st_setsrid(st_geomfromtext(pl.item ->> 'wkt'), 4326), 2154)
+                            geom_transect = st_multi(st_transform(st_setsrid(st_geomfromtext(pl.item ->> 'wkt'), 4326), 2154))
                           , update_ts=now()
                             FROM
                                 src_vn_json.places_json pl
