@@ -3,7 +3,8 @@ PEUPLEMENT DES TABLES PAR TRIGGERS
 -----
 Simulation d'un update pour déclencher le trigger
 */
-BEGIN
+
+BEGIN TRANSACTION
 ;
 
 TRUNCATE pr_vigienature.t_releve RESTART IDENTITY CASCADE
@@ -22,10 +23,15 @@ SET
                                    src_vn_json.forms_json f
                                WHERE
                                      f.item #>> '{protocol,protocol_name}' LIKE 'S_OC%'
-                                 AND item ->> 'id_form_universal' NOT LIKE '0'
-                               LIMIT 200)
+                                 AND item ->> 'id_form_universal' NOT LIKE '0')
 
 ;
+
+END TRANSACTION;
+
+BEGIN TRANSACTION;
+
+ALTER TABLE src_vn_json.observations_json DISABLE TRIGGER fct_tri_c_upsert_vn_observation_to_geonature;
 
 UPDATE src_vn_json.observations_json
 SET
@@ -36,10 +42,10 @@ SET
                  bdd_source_id_universal
                  FROM
                      pr_vigienature.t_releve
---                  WHERE t_releve.nom_protocole LIKE 'SHOC'
---                  LIMIT 100
             )
 ;
 
-COMMIT
-;
+
+ALTER TABLE src_vn_json.observations_json DISABLE TRIGGER fct_tri_c_upsert_vn_observation_to_geonature;
+
+END TRANSACTION;
