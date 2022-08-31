@@ -11,6 +11,7 @@ INSERT INTO
       , ('WIND', 'Vent')
       , ('VISIBILITY', 'Visibilité')
       , ('CLOUD', 'Couverture nuageuse')
+      , ('SNOW', 'Neige')
 ;
 
 TRUNCATE pr_vigienature.t_nomenclature RESTART IDENTITY CASCADE
@@ -209,6 +210,10 @@ INSERT INTO
       , (pr_vigienature.fct_get_nomenclature_type('VISIBILITY'), '1', 'GOOD_VISIBILITY', 'Bonne')
       , (pr_vigienature.fct_get_nomenclature_type('VISIBILITY'), '3', 'BAD_VISIBILITY', 'Faible')
       , (pr_vigienature.fct_get_nomenclature_type('VISIBILITY'), '2', 'MODERATE_VISIBILITY', 'Modérée')
+      , (pr_vigienature.fct_get_nomenclature_type('SNOW'), '3', 'FIVE_CM', '1 à 5 cm')
+      , (pr_vigienature.fct_get_nomenclature_type('SNOW'), '4', 'MORE_FIVE_CM', '>5cm')
+      , (pr_vigienature.fct_get_nomenclature_type('SNOW'), '1', 'NO_SNOW', 'Absente')
+      , (pr_vigienature.fct_get_nomenclature_type('SNOW'), '2', 'ONE_CM', '0 à 1 cm')
 ;
 
 INSERT INTO

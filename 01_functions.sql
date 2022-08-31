@@ -195,6 +195,7 @@ $$
             the_nuage_id                INTEGER;
             the_pluie_id                INTEGER;
             the_vent_id                 INTEGER;
+            the_neige_id                INTEGER;
             the_visibilite_id           INTEGER;
             the_p_milieu_id             INTEGER;
             the_p_type_id               INTEGER;
@@ -220,7 +221,7 @@ $$
             the_time_start = cast(new.item ->> 'time_start' AS TIME);
             the_date_stop = cast(new.item ->> 'date_stop' AS DATE);
             the_time_stop = cast(new.item ->> 'time_stop' AS TIME);
-            the_observer = pr_vigienature.fct_get_observer_from_vn(cast(new.item ->> '@uid' AS INT), new.site);
+            the_observer = new.item ->> '@uid' AS int;
             the_carre_numnat = CASE
                                    WHEN ((new.item #>> '{protocol, site_code}') ~ '^[0-9\.]+$' AND
                                          new.item #>> '{protocol, protocol_name}' IN ('STOC_EPS', 'SHOC'))
@@ -241,6 +242,7 @@ $$
             the_nuage_id = pr_vigienature.fct_get_nomenclature('CLOUD', new.item #>> '{protocol, stoc_cloud}');
             the_pluie_id = pr_vigienature.fct_get_nomenclature('RAIN', new.item #>> '{protocol, stoc_rain}');
             the_vent_id = pr_vigienature.fct_get_nomenclature('WIND', new.item #>> '{protocol, stoc_wind}');
+            the_neige_id = pr_vigienature.fct_get_nomenclature('SNOW', new.item #>> '{protocol, stoc_snow}');
             the_visibilite_id =
                     pr_vigienature.fct_get_nomenclature('VISIBILITY', new.item #>> '{protocol, stoc_visibility}');
             the_p_milieu_id = pr_vigienature.fct_get_nomenclature('HAB_ENV', new.item #>> '{protocol, habitat, hp1}');
@@ -286,6 +288,7 @@ $$
                                             , nuage_id
                                             , pluie_id
                                             , vent_id
+                                            , neige_id
                                             , visibilite_id
                                             , p_milieu_id
                                             , p_type_id
@@ -322,6 +325,7 @@ $$
                         , the_nuage_id
                         , the_pluie_id
                         , the_vent_id
+                        , the_neige_id
                         , the_visibilite_id
                         , the_p_milieu_id
                         , the_p_type_id
@@ -359,6 +363,7 @@ $$
                       , nuage_id                = the_nuage_id
                       , pluie_id                = the_pluie_id
                       , vent_id                 = the_vent_id
+                      , neige_id                = the_neige_id
                       , visibilite_id           = the_visibilite_id
                       , p_milieu_id             = the_p_milieu_id
                       , p_type_id               = the_p_type_id
@@ -493,7 +498,8 @@ $$
                     THEN
                         UPDATE pr_vigienature.t_releve
                         SET
-                            geom_transect = st_multi(st_transform(st_setsrid(st_geomfromtext(pl.item ->> 'wkt'), 4326), 2154))
+                            geom_transect = st_multi(st_transform(st_setsrid(st_geomfromtext(pl.item ->> 'wkt'), 4326),
+                                                                  2154))
                           , update_ts=now()
                             FROM
                                 src_vn_json.places_json pl
