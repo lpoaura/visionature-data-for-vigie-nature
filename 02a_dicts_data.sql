@@ -198,6 +198,8 @@ INSERT INTO
       , (pr_vigienature.fct_get_nomenclature_type('DISTANCE'), 'L', 'LESS200', '100-200m')
       , (pr_vigienature.fct_get_nomenclature_type('DISTANCE'), 'M', 'MORE200', '> 200m')
       , (pr_vigienature.fct_get_nomenclature_type('DISTANCE'), 'F', 'LESS100', '25-100m')
+      , (pr_vigienature.fct_get_nomenclature_type('DISTANCE'), 'H', NULL, '> 100m')
+      , (pr_vigienature.fct_get_nomenclature_type('DISTANCE'), 'X', NULL, 'Non indiquée')
       , (pr_vigienature.fct_get_nomenclature_type('RAIN'), '1', 'NO_RAIN', 'Absente')
       , (pr_vigienature.fct_get_nomenclature_type('RAIN'), '2', 'SMALL_RAIN', 'Bruine')
       , (pr_vigienature.fct_get_nomenclature_type('RAIN'), '3', 'STRONG_RAIN', 'Averses')
