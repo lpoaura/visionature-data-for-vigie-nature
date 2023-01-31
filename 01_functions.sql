@@ -27,6 +27,29 @@ $$
             LANGUAGE plpgsql;
 
 
+        DROP FUNCTION IF EXISTS pr_vigienature.fct_get_id_nomenclature;
+
+        CREATE FUNCTION pr_vigienature.fct_get_id_nomenclature(_type_code TEXT, _nomenclature_code TEXT) RETURNS INTEGER
+            LANGUAGE plpgsql
+        AS
+        $fct_get_id_nomenclature$
+        DECLARE
+            the_id INT ;
+        BEGIN
+            SELECT
+                id
+                INTO
+                    the_id
+                FROM
+                    pr_vigienature.t_nomenclature
+                WHERE
+                      t_nomenclature.code = _nomenclature_code
+                  AND type_id = pr_vigienature.fct_get_nomenclature_type(_type_code);
+            RETURN the_id;
+        END ;
+        $fct_get_id_nomenclature$;
+
+
         DROP FUNCTION IF EXISTS pr_vigienature.fct_get_nomenclature;
         CREATE OR REPLACE FUNCTION pr_vigienature.fct_get_nomenclature(_type_code TEXT, _vn_code TEXT) RETURNS INT AS
         $get_releve_info$
@@ -498,8 +521,11 @@ $$
                     THEN
                         UPDATE pr_vigienature.t_releve
                         SET
-                            geom_transect = st_multi(st_transform(st_setsrid(st_geomfromtext(pl.item ->> 'wkt'), 4326),
-                                                                  2154))
+                            geom_transect = public.st_multi(
+                                    public.st_transform(
+                                            public.st_setsrid(
+                                                    public.st_geomfromtext(nullif(pl.item ->> 'wkt', '')), 4326),
+                                            2154))
                           , update_ts=now()
                             FROM
                                 src_vn_json.places_json pl

@@ -7,9 +7,11 @@ DO
 $$
     BEGIN
 
-        DROP SCHEMA pr_vigienature CASCADE;
+        --         DROP SCHEMA IF EXISTS pr_vigienature CASCADE;
 
         CREATE SCHEMA IF NOT EXISTS pr_vigienature;
+
+        COMMENT ON SCHEMA pr_vigienature IS 'Schéma de gestion des données VigieNature STOC/SHOC de VisioNature.'
 
         CREATE TABLE IF NOT EXISTS pr_vigienature.l_carre_suivi
         (
@@ -33,7 +35,7 @@ $$
             ADD CONSTRAINT l_carre_suivi_numnat UNIQUE (numnat);
 
         /* Table dictionnaire des codes espèces */
-/*DROP TABLE IF EXISTS pr_vigienature.cor_taxon_referentiels;*/
+        /*DROP TABLE IF EXISTS pr_vigienature.cor_taxon_referentiels;*/
 
         CREATE TABLE pr_vigienature.cor_taxon_referentiels
         (
