@@ -13,14 +13,11 @@ $$
         DECLARE
             the_id INT ;
         BEGIN
-            SELECT
-                id
-                INTO
-                    the_id
-                FROM
-                    pr_vigienature.bib_nomenclature_type
-                WHERE
-                    bib_nomenclature_type.code = _type_code;
+            SELECT id
+            INTO
+                the_id
+            FROM pr_vigienature.bib_nomenclature_type
+            WHERE bib_nomenclature_type.code = _type_code;
             RETURN the_id;
         END ;
         $get_nomenclature_type$
@@ -36,15 +33,12 @@ $$
         DECLARE
             the_id INT ;
         BEGIN
-            SELECT
-                id
-                INTO
-                    the_id
-                FROM
-                    pr_vigienature.t_nomenclature
-                WHERE
-                      t_nomenclature.code = _nomenclature_code
-                  AND type_id = pr_vigienature.fct_get_nomenclature_type(_type_code);
+            SELECT id
+            INTO
+                the_id
+            FROM pr_vigienature.t_nomenclature
+            WHERE t_nomenclature.code = _nomenclature_code
+              AND type_id = pr_vigienature.fct_get_nomenclature_type(_type_code);
             RETURN the_id;
         END ;
         $fct_get_id_nomenclature$;
@@ -56,15 +50,12 @@ $$
         DECLARE
             the_id INT ;
         BEGIN
-            SELECT
-                id
-                INTO
-                    the_id
-                FROM
-                    pr_vigienature.t_nomenclature
-                WHERE
-                      t_nomenclature.code_vn = _vn_code
-                  AND type_id = pr_vigienature.fct_get_nomenclature_type(_type_code);
+            SELECT id
+            INTO
+                the_id
+            FROM pr_vigienature.t_nomenclature
+            WHERE t_nomenclature.code_vn = _vn_code
+              AND type_id = pr_vigienature.fct_get_nomenclature_type(_type_code);
             RETURN the_id;
         END ;
         $get_releve_info$
@@ -79,16 +70,13 @@ $$
         DECLARE
             the_altitude INT;
         BEGIN
-            SELECT
-                st_value(rast, _geom)::INT
-                INTO
-                    the_altitude
-                FROM
-                    ref_geo.dem
-                WHERE
-                    st_intersects(
-                            rast
-                        , _geom);
+            SELECT st_value(rast, _geom)::INT
+            INTO
+                the_altitude
+            FROM ref_geo.dem
+            WHERE st_intersects(
+                          rast
+                      , _geom);
             RETURN the_altitude;
         END ;
         $get_altitude_from_dem$
@@ -103,15 +91,12 @@ $$
         DECLARE
             the_id INT;
         BEGIN
-            SELECT
-                cor_taxon_referentiels.id
-                INTO the_id
-                FROM
-                    pr_vigienature.cor_taxon_referentiels
-                WHERE
-                    vn_id_species = _id_species
+            SELECT cor_taxon_referentiels.id
+            INTO the_id
+            FROM pr_vigienature.cor_taxon_referentiels
+            WHERE vn_id_species = _id_species
 --                   AND ref_tax IS TRUE
-                LIMIT 1;
+            LIMIT 1;
             RETURN the_id;
         END ;
         $get_taxon_id$
@@ -127,14 +112,11 @@ $$
             the_id INT;
         BEGIN
 
-            SELECT
-                t_releve.id
-                INTO the_id
-                FROM
-                    pr_vigienature.t_releve
-                WHERE
-                    bdd_source_id_universal = _id_form_universal
-                LIMIT 1;
+            SELECT t_releve.id
+            INTO the_id
+            FROM pr_vigienature.t_releve
+            WHERE bdd_source_id_universal = _id_form_universal
+            LIMIT 1;
             RETURN the_id;
         END ;
         $get_releve_id_from_id_form_uid$
@@ -147,14 +129,11 @@ $$
         DECLARE
             the_id INT;
         BEGIN
-            SELECT
-                l_carre_suivi.id
-                INTO the_id
-                FROM
-                    pr_vigienature.l_carre_suivi
-                WHERE
-                    _carre_numnat = l_carre_suivi.numnat
-                LIMIT 1;
+            SELECT l_carre_suivi.id
+            INTO the_id
+            FROM pr_vigienature.l_carre_suivi
+            WHERE _carre_numnat = l_carre_suivi.numnat
+            LIMIT 1;
             RETURN the_id;
         END ;
         $get_carre_suivi_id$
@@ -165,14 +144,11 @@ $$
         DECLARE
             the_observer VARCHAR(100);
         BEGIN
-            SELECT
-                upper((item ->> 'name')) || ' ' || (item ->> 'surname')
-                INTO the_observer
-                FROM
-                    src_vn_json.observers_json
-                WHERE
-                      id_universal = _uid
-                  AND site = _site;
+            SELECT upper((item ->> 'name')) || ' ' || (item ->> 'surname')
+            INTO the_observer
+            FROM src_vn_json.observers_json
+            WHERE id_universal = _uid
+              AND site = _site;
             RETURN the_observer;
         END ;
         $get_observer_from_vn$
@@ -185,10 +161,8 @@ $$
             -- Deleting data on src_vn.observations when raw data is deleted
             RAISE DEBUG '[VigieNature] DELETE RELEVE %', old;
             DELETE
-                FROM
-                    pr_vigienature.t_releve
-                WHERE
-                    bdd_source_id_universal = old.item ->> 'id_form_universal';
+            FROM pr_vigienature.t_releve
+            WHERE bdd_source_id_universal = old.item ->> 'id_form_universal';
             IF NOT found
             THEN
                 RETURN NULL;
@@ -297,83 +271,80 @@ $$
             the_source_data = new.item;
             IF (tg_op IN ('UPDATE', 'INSERT'))
             THEN
-                INSERT INTO
-                    pr_vigienature.t_releve ( date_debut
-                                            , heure_debut
-                                            , date_fin
-                                            , heure_fin
-                                            , observateur
-                                            , carre_suivi_id
-                                            , carre_numnat
-                                            , point_num
-                                            , site_name
+                INSERT INTO pr_vigienature.t_releve ( date_debut
+                                                    , heure_debut
+                                                    , date_fin
+                                                    , heure_fin
+                                                    , observateur
+                                                    , carre_suivi_id
+                                                    , carre_numnat
+                                                    , point_num
+                                                    , site_name
 --                                             , altitude
-                                            , nuage_id
-                                            , pluie_id
-                                            , vent_id
-                                            , neige_id
-                                            , visibilite_id
-                                            , p_milieu_id
-                                            , p_type_id
-                                            , p_cat1_id
-                                            , p_cat2_id
-                                            , p_ss_cat1_id
-                                            , p_ss_cat2_id
-                                            , s_milieu_id
-                                            , s_type_id
-                                            , s_cat1_id
-                                            , s_cat2_id
-                                            , s_ss_cat1_id
-                                            , s_ss_cat2_id
-                                            , geom_point
-                                            , passage_mnhn
-                                            , nom_protocole
-                                            , bdd_source
-                                            , bdd_source_id
-                                            , bdd_source_id_universal
-                                            , type_releve
-                                            , source_data
-                                            , update_ts)
-                    VALUES
-                        ( the_date_start
-                        , the_time_start
-                        , the_date_stop
-                        , the_time_stop
-                        , the_observer
-                        , the_carre_suivi_id
-                        , the_carre_numnat
-                        , the_point_num
-                        , the_site_name
+                                                    , nuage_id
+                                                    , pluie_id
+                                                    , vent_id
+                                                    , neige_id
+                                                    , visibilite_id
+                                                    , p_milieu_id
+                                                    , p_type_id
+                                                    , p_cat1_id
+                                                    , p_cat2_id
+                                                    , p_ss_cat1_id
+                                                    , p_ss_cat2_id
+                                                    , s_milieu_id
+                                                    , s_type_id
+                                                    , s_cat1_id
+                                                    , s_cat2_id
+                                                    , s_ss_cat1_id
+                                                    , s_ss_cat2_id
+                                                    , geom_point
+                                                    , passage_mnhn
+                                                    , nom_protocole
+                                                    , bdd_source
+                                                    , bdd_source_id
+                                                    , bdd_source_id_universal
+                                                    , type_releve
+                                                    , source_data
+                                                    , update_ts)
+                VALUES ( the_date_start
+                       , the_time_start
+                       , the_date_stop
+                       , the_time_stop
+                       , the_observer
+                       , the_carre_suivi_id
+                       , the_carre_numnat
+                       , the_point_num
+                       , the_site_name
 --                         , the_altitude
-                        , the_nuage_id
-                        , the_pluie_id
-                        , the_vent_id
-                        , the_neige_id
-                        , the_visibilite_id
-                        , the_p_milieu_id
-                        , the_p_type_id
-                        , the_p_cat1_id
-                        , the_p_cat2_id
-                        , the_p_ss_cat1_id
-                        , the_p_ss_cat2_id
-                        , the_s_milieu_id
-                        , the_s_type_id
-                        , the_s_cat1_id
-                        , the_s_cat2_id
-                        , the_s_ss_cat1_id
-                        , the_s_ss_cat2_id
-                        , the_geom_point
-                        , the_passage_mnhn
-                        , the_nom_protocole
-                        , the_bdd_source
-                        , the_bdd_source_id
-                        , the_bdd_source_id_universal
-                        , the_type_releve
-                        , the_source_data
-                        , now())
+                       , the_nuage_id
+                       , the_pluie_id
+                       , the_vent_id
+                       , the_neige_id
+                       , the_visibilite_id
+                       , the_p_milieu_id
+                       , the_p_type_id
+                       , the_p_cat1_id
+                       , the_p_cat2_id
+                       , the_p_ss_cat1_id
+                       , the_p_ss_cat2_id
+                       , the_s_milieu_id
+                       , the_s_type_id
+                       , the_s_cat1_id
+                       , the_s_cat2_id
+                       , the_s_ss_cat1_id
+                       , the_s_ss_cat2_id
+                       , the_geom_point
+                       , the_passage_mnhn
+                       , the_nom_protocole
+                       , the_bdd_source
+                       , the_bdd_source_id
+                       , the_bdd_source_id_universal
+                       , the_type_releve
+                       , the_source_data
+                       , now())
                 ON CONFLICT (bdd_source_id_universal) DO UPDATE
-                    SET
-                        date_debut              = the_date_start
+                    SET date_debut              = the_date_start
                       , heure_debut             = the_time_start
                       , date_fin                = the_date_stop
                       , heure_fin               = the_time_stop
@@ -425,10 +396,8 @@ $$
                 )
             THEN
                 UPDATE pr_vigienature.t_releve
-                SET
-                    altitude = pr_vigienature.fct_get_altitude_from_dem(new.geom_point)
-                    WHERE
-                        t_releve.id = new.id;
+                SET altitude = pr_vigienature.fct_get_altitude_from_dem(new.geom_point)
+                WHERE t_releve.id = new.id;
             END IF;
             RETURN new;
         END;
@@ -448,90 +417,74 @@ $$
             IF is_vigienature
             THEN
                 SELECT *
-                    INTO the_releve
-                    FROM
-                        pr_vigienature.t_releve
-                    WHERE
-                        bdd_source_id_universal = new.id_form_universal;
+                INTO the_releve
+                FROM pr_vigienature.t_releve
+                WHERE bdd_source_id_universal = new.id_form_universal;
                 the_taxon_id = pr_vigienature.fct_get_taxon_id(cast(new.item #>> '{species, @id}' AS INT));
-                SELECT
-                    item ->> 'latin_name'
-                    INTO the_nom_cite
-                    FROM
-                        src_vn_json.species_json
-                    WHERE
-                            (new.site, cast(new.item #>> '{species, @id}' AS INT)) =
-                            (species_json.site, species_json.id);
+                SELECT item ->> 'latin_name'
+                INTO the_nom_cite
+                FROM src_vn_json.species_json
+                WHERE (new.site, cast(new.item #>> '{species, @id}' AS INT)) =
+                      (species_json.site, species_json.id);
                 IF (tg_op IN ('INSERT', 'UPDATE')) THEN
                     DELETE
-                        FROM
-                            pr_vigienature.t_observation
-                        WHERE
-                            uuid = cast(new.item #>> '{observers,0,uuid}' AS UUID);
-                    INSERT INTO
-                        pr_vigienature.t_observation( uuid
-                                                    , releve_id
-                                                    , taxon_id
-                                                    , nom_cite
-                                                    , nombre
-                                                    , distance_id
-                                                    , details
-                                                    , bdd_source_id
-                                                    , bdd_source_id_universal
-                                                    , source_data
-                                                    , update_ts)
-                    SELECT
-                        cast(obs.item #>> '{observers,0,uuid}' AS UUID)
-                      , the_releve.id
-                      , the_taxon_id
-                      , the_nom_cite
-                      , (detail.obj ->> 'count')::INT
-                      , pr_vigienature.fct_get_nomenclature('DISTANCE', detail.obj ->> 'distance')
-                      , detail.obj
-                      , obs.id
-                      , obs.item #>> '{observers,0,id_universal}'
-                      , obs.item
-                      , now()
-                        FROM
-                            (SELECT
-                                 new.id
+                    FROM pr_vigienature.t_observation
+                    WHERE uuid = cast(new.item #>> '{observers,0,uuid}' AS UUID);
+                    INSERT INTO pr_vigienature.t_observation( uuid
+                                                            , releve_id
+                                                            , taxon_id
+                                                            , nom_cite
+                                                            , nombre
+                                                            , distance_id
+                                                            , details
+                                                            , bdd_source_id
+                                                            , bdd_source_id_universal
+                                                            , source_data
+                                                            , update_ts)
+                    SELECT cast(obs.item #>> '{observers,0,uuid}' AS UUID)
+                         , the_releve.id
+                         , the_taxon_id
+                         , the_nom_cite
+                         , (detail.obj ->> 'count')::INT
+                         , pr_vigienature.fct_get_nomenclature('DISTANCE', detail.obj ->> 'distance')
+                         , detail.obj
+                         , obs.id
+                         , obs.item #>> '{observers,0,id_universal}'
+                         , obs.item
+                         , now()
+                    FROM (SELECT new.id
                                , new.site
                                , new.item
                                , new.id_form_universal
                                , new.update_ts) AS obs
-                                LEFT JOIN LATERAL jsonb_array_elements(obs.item #> '{observers,0,details}') AS detail (obj)
-                                          ON TRUE;
+                             LEFT JOIN LATERAL jsonb_array_elements(obs.item #> '{observers,0,details}') AS detail (obj)
+                                       ON TRUE;
                     IF (the_releve.type_releve NOT LIKE 'transect' AND new.item #>> '{observers,0,precision}' LIKE
                                                                        'transect%')
                     THEN
                         UPDATE pr_vigienature.t_releve
-                        SET
-                            type_releve = CASE
+                        SET type_releve = CASE
                                               WHEN new.item #>> '{observers,0,precision}' LIKE 'transect%'
                                                   THEN 'transect'
                                               ELSE 'point'
-                                END
+                            END
                           , update_ts   = now()
-                            WHERE
-                                  t_releve.id = the_releve.id
-                              AND coalesce(type_releve, '') NOT LIKE 'point'
-                            RETURNING * INTO the_releve;
+                        WHERE t_releve.id = the_releve.id
+                          AND coalesce(type_releve, '') NOT LIKE 'point'
+                        RETURNING * INTO the_releve;
                     END IF;
                     IF (the_releve.geom_transect IS NULL AND the_releve.type_releve LIKE 'transect')
                     THEN
                         UPDATE pr_vigienature.t_releve
-                        SET
-                            geom_transect = public.st_multi(
-                                    public.st_transform(
-                                            public.st_setsrid(
-                                                    public.st_geomfromtext(nullif(pl.item ->> 'wkt', '')), 4326),
-                                            2154))
+                        SET geom_transect = public.st_multi(
+                                public.st_transform(
+                                        public.st_setsrid(
+                                                public.st_geomfromtext(nullif(pl.item ->> 'wkt', '')), 4326),
+                                        2154))
                           , update_ts=now()
-                            FROM
-                                src_vn_json.places_json pl
-                            WHERE
-                                  t_releve.id = the_releve.id
-                              AND (pl.site, pl.id) = (new.site, (new.item #>> '{place,@id}')::INT);
+                        FROM src_vn_json.places_json pl
+                        WHERE t_releve.id = the_releve.id
+                          AND (pl.site, pl.id) = (new.site, (new.item #>> '{place,@id}')::INT);
                     END IF;
                 END IF;
             END IF;
@@ -540,7 +493,24 @@ $$
         $upsert_obs$
             LANGUAGE plpgsql;
 
-
+        DROP FUNCTION IF EXISTS pr_vigienature.fct_tri_delete_obs CASCADE;
+        CREATE OR REPLACE FUNCTION pr_vigienature.fct_tri_delete_obs() RETURNS TRIGGER AS
+        $delete_obs$
+        BEGIN
+            -- Deleting data on src_vn.observations when raw data is deleted
+            RAISE DEBUG '[VigieNature] DELETE OBS %', old;
+            DELETE
+            FROM pr_vigienature.t_observation
+            WHERE t_observation.uuid = coalesce(cast(old.item #>> '{observers,0,uuid}' AS UUID),
+                                                src_lpodatas.fct_c_get_observation_uuid(old.site, old.id));
+            IF NOT found
+            THEN
+                RETURN NULL;
+            END IF;
+            RETURN old;
+        END;
+        $delete_obs$
+            LANGUAGE plpgsql;
         /* End of transaction */
         COMMIT;
     END

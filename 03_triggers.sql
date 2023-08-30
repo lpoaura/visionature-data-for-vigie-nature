@@ -55,6 +55,13 @@ $$
             FOR EACH ROW
             WHEN (new.id_form_universal IS NOT NULL)
         EXECUTE PROCEDURE pr_vigienature.fct_tri_update_obs();
+
+        CREATE TRIGGER tri_vigienature_delete_obs
+            AFTER DELETE
+            ON src_vn_json.observations_json
+            FOR EACH ROW
+            WHEN (old.id_form_universal IS NOT NULL)
+        EXECUTE PROCEDURE pr_vigienature.fct_tri_delete_obs();
         COMMIT;
     END
 $$
