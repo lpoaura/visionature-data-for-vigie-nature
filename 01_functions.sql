@@ -64,7 +64,7 @@ $$
 
         DROP FUNCTION IF EXISTS pr_vigienature.fct_get_altitude_from_dem;
 
-        CREATE OR REPLACE FUNCTION pr_vigienature.fct_get_altitude_from_dem(_geom GEOMETRY(POINT, 2154))
+        CREATE OR REPLACE FUNCTION pr_vigienature.fct_get_altitude_from_dem(_geom geometry(POINT, 2154))
             RETURNS INT AS
         $get_altitude_from_dem$
         DECLARE
@@ -139,12 +139,29 @@ $$
         $get_carre_suivi_id$
             LANGUAGE plpgsql;
 
+        DROP FUNCTION IF EXISTS pr_vigienature.fct_get_carre_suivi_id_from_geom;
+        CREATE OR REPLACE FUNCTION pr_vigienature.fct_get_carre_suivi_id_from_geom(_geom_point geometry(POINT, 2154))
+            RETURNS INT AS
+        $get_carre_suivi_id_from_geom$
+        DECLARE
+            the_id INT;
+        BEGIN
+            SELECT l_carre_suivi.id
+            INTO the_id
+            FROM pr_vigienature.l_carre_suivi
+            WHERE st_within(_geom_point, l_carre_suivi.geom)
+            LIMIT 1;
+            RETURN the_id;
+        END ;
+        $get_carre_suivi_id_from_geom$
+            LANGUAGE plpgsql;
+
         CREATE OR REPLACE FUNCTION pr_vigienature.fct_get_observer_from_vn(_uid INT, _site VARCHAR) RETURNS VARCHAR(100) AS
         $get_observer_from_vn$
         DECLARE
             the_observer VARCHAR(100);
         BEGIN
-            SELECT upper((item ->> 'name')) || ' ' || (item ->> 'surname')
+            SELECT UPPER((item ->> 'name')) || ' ' || (item ->> 'surname')
             INTO the_observer
             FROM src_vn_json.observers_json
             WHERE id_universal = _uid
@@ -206,36 +223,42 @@ $$
             the_s_cat2_id               INTEGER;
             the_s_ss_cat1_id            INTEGER;
             the_s_ss_cat2_id            INTEGER;
-            the_geom_point              public.GEOMETRY(point, 2154);
+            the_geom_point              public.geometry(point, 2154);
             the_nom_protocole           VARCHAR(50);
             the_bdd_source_id_universal VARCHAR(20);
             the_bdd_source              VARCHAR(20);
             the_bdd_source_id           INTEGER;
             the_type_releve             VARCHAR(20);
-            the_source_data             JSONB;
+            the_source_data             jsonb;
         BEGIN
-            the_date_start = cast(new.item ->> 'date_start' AS DATE);
-            the_time_start = cast(new.item ->> 'time_start' AS TIME);
-            the_date_stop = cast(new.item ->> 'date_stop' AS DATE);
-            the_time_stop = cast(new.item ->> 'time_stop' AS TIME);
+            the_date_start = CAST(new.item ->> 'date_start' AS DATE);
+            the_time_start = CAST(new.item ->> 'time_start' AS TIME);
+            the_date_stop = CAST(new.item ->> 'date_stop' AS DATE);
+            the_time_stop = CAST(new.item ->> 'time_stop' AS TIME);
             the_observer = new.item ->> '@uid' AS int;
-            the_carre_numnat = CASE
-                                   WHEN ((new.item #>> '{protocol, site_code}') ~ '^[0-9\.]+$' AND
-                                         new.item #>> '{protocol, protocol_name}' IN ('STOC_EPS', 'SHOC'))
-                                       THEN cast(new.item #>> '{protocol, site_code}' AS INT)
+            the_geom_point = public.st_transform(
+                    public.st_setsrid(
+                            public.st_makepoint(CAST(new.item ->> 'lon' AS FLOAT), CAST(new.item ->> 'lat' AS FLOAT)),
+                            4326), 2154);
+            the_carre_suivi_id = CASE
+                                     WHEN new.item #>> '{protocol, protocol_name}' IN ('STOC_EPS', 'SHOC')
+                                         THEN COALESCE(
+                                             pr_vigienature.fct_get_carre_suivi_id(CASE
+                                                                                       WHEN (new.item #>> '{protocol, site_code}') ~ '^[0-9\.]+$'
+                                                                                           THEN CAST(new.item #>> '{protocol, site_code}' AS INT) END),
+                                             pr_vigienature.fct_get_carre_suivi_id_from_geom(the_geom_point))
                 END;
-            RAISE DEBUG 'the_carre_numnat %',the_carre_numnat;
-            the_carre_suivi_id = pr_vigienature.fct_get_carre_suivi_id(the_carre_numnat);
-            the_point_num = cast(new.item #>> '{protocol, sequence_number}' AS INT);
+            SELECT numnat INTO the_carre_numnat FROM pr_vigienature.l_carre_suivi WHERE id = the_carre_suivi_id;
+            RAISE DEBUG 'the_carre_numnat % for id %', the_carre_numnat, the_carre_suivi_id;
+            the_carre_suivi_id = COALESCE(pr_vigienature.fct_get_carre_suivi_id(the_carre_numnat),
+                                          pr_vigienature.fct_get_carre_suivi_id_from_geom(the_geom_point));
+            the_point_num = CAST(new.item #>> '{protocol, sequence_number}' AS INT);
             the_site_name = CASE
                                 WHEN ((new.item #>> '{protocol, site_code}') !~ '^[0-9\.]+$' OR
                                       new.item #>> '{protocol, protocol_name}' NOT IN ('STOC_EPS', 'SHOC'))
-                                    THEN coalesce(new.item #>> '{protocol, site_code}',
+                                    THEN COALESCE(new.item #>> '{protocol, site_code}',
                                                   new.item #>> '{protocol, local_site_code}')
                 END;
-            the_geom_point = st_transform(
-                    st_setsrid(st_makepoint(cast(new.item ->> 'lon' AS FLOAT), cast(new.item ->> 'lat' AS FLOAT)),
-                               4326), 2154);
             the_nuage_id = pr_vigienature.fct_get_nomenclature('CLOUD', new.item #>> '{protocol, stoc_cloud}');
             the_pluie_id = pr_vigienature.fct_get_nomenclature('RAIN', new.item #>> '{protocol, stoc_rain}');
             the_vent_id = pr_vigienature.fct_get_nomenclature('WIND', new.item #>> '{protocol, stoc_wind}');
@@ -259,7 +282,7 @@ $$
             the_s_ss_cat2_id =
                     pr_vigienature.fct_get_nomenclature('HAB_CAT2', new.item #>> '{protocol, habitat, hs4B}');
             the_nom_protocole = new.item #>> '{protocol, protocol_name}';
-            the_passage_mnhn = cast(new.item #>> '{protocol, visit_number}' AS INT);
+            the_passage_mnhn = CAST(new.item #>> '{protocol, visit_number}' AS INT);
             the_bdd_source_id_universal = new.item ->> 'id_form_universal';
             the_bdd_source = new.site;
             the_bdd_source_id = new.id;
@@ -342,7 +365,7 @@ $$
                        , the_bdd_source_id_universal
                        , the_type_releve
                        , the_source_data
-                       , now())
+                       , NOW())
                 ON CONFLICT (bdd_source_id_universal) DO UPDATE
                     SET date_debut              = the_date_start
                       , heure_debut             = the_time_start
@@ -379,8 +402,7 @@ $$
                       , bdd_source_id_universal = the_bdd_source_id_universal
                       , type_releve             = the_type_releve
                       , source_data             = the_source_data
-                      , update_ts               = now();
-
+                      , update_ts               = NOW();
             END IF;
             RETURN new;
         END ;
@@ -420,16 +442,16 @@ $$
                 INTO the_releve
                 FROM pr_vigienature.t_releve
                 WHERE bdd_source_id_universal = new.id_form_universal;
-                the_taxon_id = pr_vigienature.fct_get_taxon_id(cast(new.item #>> '{species, @id}' AS INT));
+                the_taxon_id = pr_vigienature.fct_get_taxon_id(CAST(new.item #>> '{species, @id}' AS INT));
                 SELECT item ->> 'latin_name'
                 INTO the_nom_cite
                 FROM src_vn_json.species_json
-                WHERE (new.site, cast(new.item #>> '{species, @id}' AS INT)) =
+                WHERE (new.site, CAST(new.item #>> '{species, @id}' AS INT)) =
                       (species_json.site, species_json.id);
                 IF (tg_op IN ('INSERT', 'UPDATE')) THEN
                     DELETE
                     FROM pr_vigienature.t_observation
-                    WHERE uuid = cast(new.item #>> '{observers,0,uuid}' AS UUID);
+                    WHERE uuid = CAST(new.item #>> '{observers,0,uuid}' AS uuid);
                     INSERT INTO pr_vigienature.t_observation( uuid
                                                             , releve_id
                                                             , taxon_id
@@ -441,7 +463,7 @@ $$
                                                             , bdd_source_id_universal
                                                             , source_data
                                                             , update_ts)
-                    SELECT cast(obs.item #>> '{observers,0,uuid}' AS UUID)
+                    SELECT CAST(obs.item #>> '{observers,0,uuid}' AS uuid)
                          , the_releve.id
                          , the_taxon_id
                          , the_nom_cite
@@ -451,13 +473,13 @@ $$
                          , obs.id
                          , obs.item #>> '{observers,0,id_universal}'
                          , obs.item
-                         , now()
+                         , NOW()
                     FROM (SELECT new.id
                                , new.site
                                , new.item
                                , new.id_form_universal
                                , new.update_ts) AS obs
-                             LEFT JOIN LATERAL jsonb_array_elements(obs.item #> '{observers,0,details}') AS detail (obj)
+                             LEFT JOIN LATERAL JSONB_ARRAY_ELEMENTS(obs.item #> '{observers,0,details}') AS detail (obj)
                                        ON TRUE;
                     IF (the_releve.type_releve NOT LIKE 'transect' AND new.item #>> '{observers,0,precision}' LIKE
                                                                        'transect%')
@@ -468,9 +490,9 @@ $$
                                                   THEN 'transect'
                                               ELSE 'point'
                             END
-                          , update_ts   = now()
+                          , update_ts   = NOW()
                         WHERE t_releve.id = the_releve.id
-                          AND coalesce(type_releve, '') NOT LIKE 'point'
+                          AND COALESCE(type_releve, '') NOT LIKE 'point'
                         RETURNING * INTO the_releve;
                     END IF;
                     IF (the_releve.geom_transect IS NULL AND the_releve.type_releve LIKE 'transect')
@@ -479,9 +501,9 @@ $$
                         SET geom_transect = public.st_multi(
                                 public.st_transform(
                                         public.st_setsrid(
-                                                public.st_geomfromtext(nullif(pl.item ->> 'wkt', '')), 4326),
+                                                public.st_geomfromtext(NULLIF(pl.item ->> 'wkt', '')), 4326),
                                         2154))
-                          , update_ts=now()
+                          , update_ts=NOW()
                         FROM src_vn_json.places_json pl
                         WHERE t_releve.id = the_releve.id
                           AND (pl.site, pl.id) = (new.site, (new.item #>> '{place,@id}')::INT);
@@ -501,7 +523,7 @@ $$
             RAISE DEBUG '[VigieNature] DELETE OBS %', old;
             DELETE
             FROM pr_vigienature.t_observation
-            WHERE t_observation.uuid = coalesce(cast(old.item #>> '{observers,0,uuid}' AS UUID),
+            WHERE t_observation.uuid = COALESCE(CAST(old.item #>> '{observers,0,uuid}' AS uuid),
                                                 src_lpodatas.fct_c_get_observation_uuid(old.site, old.id));
             IF NOT found
             THEN
