@@ -319,17 +319,15 @@ $$
 
         DROP VIEW IF EXISTS pr_vigienature.v_vigienature_observers;
         CREATE VIEW pr_vigienature.v_vigienature_observers AS
-        SELECT
-            site
-          , id                 AS id_local
-          , id_universal
-          , item ->> 'email'   AS email
-          , item ->> 'name'    AS nom
-          , item ->> 'surname' AS prenom
-            FROM
-                src_vn_json.observers_json
-            WHERE
-                id_universal IN (SELECT observateur::INT FROM pr_vigienature.t_releve);
+        SELECT site
+             , id                       AS id_local
+             , id_universal
+             , item ->> 'email'::TEXT   AS email
+             , item ->> 'name'::TEXT    AS nom
+             , item ->> 'surname'::TEXT AS prenom
+        FROM src_vn_json.observers_json
+        WHERE (id_universal IN (SELECT t_releve.observateur::INTEGER AS observateur
+                                FROM pr_vigienature.t_releve where (t_releve.observateur ~ '^\d+$')));
         COMMIT;
     END
 $$
