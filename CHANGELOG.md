@@ -6,23 +6,12 @@
 ### Fixes
 
 - Fix view `pr_vigienature.v_vigienature_observers` which file in case of old data (not visionature sourced) are imported, where observers are not IDs.
+- Cleanup views `pr_vigienature.v_vigienature_observers` and `pr_vigienature.v_vigienature_data`
 
 ### ToDo
 
-- Execute following SQL code:
+- apply sql script `12_views.sql`
 
-```sql
-CREATE VIEW pr_vigienature.v_vigienature_observers AS
-    SELECT site
-        , id                       AS id_local
-        , id_universal
-        , item ->> 'email'::TEXT   AS email
-        , item ->> 'name'::TEXT    AS nom
-        , item ->> 'surname'::TEXT AS prenom
-   FROM src_vn_json.observers_json
-   WHERE (id_universal IN (SELECT t_releve.observateur::INTEGER AS observateur
-                           FROM pr_vigienature.t_releve where (t_releve.observateur ~ '^\d+$')));
-```
 
 ## 1.2.0 - Nov 7, 2023
 
