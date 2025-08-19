@@ -1,7 +1,18 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
 
-## 1.2.1 - Aug 19, 2025
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+ 
+...
+
+---
+
+## [1.2.1] - 2025-08-19
+
 
 ### Fixes
 
@@ -12,21 +23,27 @@
 
 - apply sql script `12_views.sql`
 
+---
 
-## 1.2.0 - Nov 7, 2023
+
+## [1.2.0] - Nov 7, 2023
 
 ### Release Note release 
 
 - Execute script `01_functions.sql`
 - Add a cron task to execute daily or weekly `11_missing_data.sql` script
 
-## 1.1.0 - Aug 30, 2023
+---
+
+## [1.1.0] - Aug 30, 2023
 
 
 - Update README by @lpofredc in #2
 - Add missing nomenclature by @lpofredc in #3
 - Fix missing obs delete trigger @lpofredc
 
-## 1.0.0 - Aug 31, 2022
+---
+
+## [1.0.0] - Aug 31, 2022
 
 First release !!!
